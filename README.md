@@ -1,0 +1,1 @@
+# vKappa for Chrome.

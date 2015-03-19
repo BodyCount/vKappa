@@ -1,0 +1,164 @@
+.emotionsHub .emotionsContainer {
+	display:none;
+}
+
+.emotionsContainer {
+	position: absolute;
+	color: #32323e;
+	width: 219px;
+	height:275px;
+	box-shadow: 0 1px 5px rgba(0, 0, 0, 0.32);
+	background: #FFFFFF;
+	bottom : 90%;
+	right: 1%;
+	z-index:1000;
+}
+
+.tabs-menu {
+	position: absolute;
+	top:88%;
+	padding-left:0px;
+    list-style-type: none;
+}
+
+.tabs-menu li {
+	width:73px;
+    height: 22px;
+    line-height: 20px;
+    float: left;
+    background-color: #EBEEF2;
+}
+
+.tabs-menu li.current {
+    background-color: #fff;
+
+}
+
+.tabs-menu li a {
+    padding: 10px;
+    text-transform: uppercase;
+    color: #fff;
+    text-decoration: none;
+}
+
+.tabs-menu .current a {
+    color: #2e7da3;
+}
+
+.tabs-menu li img{
+	margin-left:18px;
+	margin-top:3px;
+}
+
+.tab {
+    background-color: #fff;
+}
+
+.tab-content {
+	height:255px;
+	display: none;
+	overflow-x: hidden;
+}
+
+.subSection {
+    list-style-type: none;
+	margin:0px;
+    padding-left: 0px;
+}
+
+.subSection li{
+	width:205px;
+    height: 21px;
+    line-height: 20px;
+    float: left;
+	background: -webkit-linear-gradient(left, #f5f6f7 , #fff);
+	margin-top:4px;
+}
+
+.subSection li a{
+    padding: 10px;
+    text-decoration: none;
+}
+
+.subSectionContent{
+	display:none;
+}
+
+#recentEmotions{
+	display: block;
+	overflow-y: hidden;
+}
+
+.col {
+    float: left;
+    position: relative;
+    min-height: 1px;
+    width: 3px;
+    height:10px;
+    padding:20px;
+    vertical-align:center;
+}
+
+.col img {
+    display: block;
+    position: absolute;
+    left:0;
+    right:0;
+    top:0;
+    bottom:0;
+    margin : auto;
+}
+
+.col:hover {
+    background: #EBEEF2;
+}
+
+.subSection li:hover{
+    background: -webkit-linear-gradient(left, #dcddde , #fff);
+}
+
+.subSection .current{
+	background: -webkit-linear-gradient(left, #dcddde , #fff);
+}
+
+.eInfo {
+  display:none;
+	color: #fff;
+	height:20px;
+	margin-top: 6px;
+	line-height: 20px;
+	padding:4px;
+	text-align:center;
+  background: #7a97b5;
+  border: 1px solid ##7a97b5;
+	opacity: 0.9;
+	z-index:1000;
+}
+
+.eInfo:after {
+	bottom: 100%;
+	left: 50%;
+	border: solid transparent;
+	content: " ";
+	height: 0;
+	width: 0;
+	position: absolute;
+	pointer-events: none;
+	border-color: rgba(136, 183, 213, 0);
+	border-bottom-color: #7a97b5;
+	border-width: 4px;
+	margin-left:-4px;
+}
+
+.tab-content::-webkit-scrollbar{
+	width: 4px;
+}
+
+.tab-content::-webkit-scrollbar-track-piece {
+	margin-top:1px;
+}
+
+.tab-content::-webkit-scrollbar-thumb {
+	border-radius:6px;
+	background: #d3d6d9;
+}

@@ -1,104 +1,93 @@
-
 var pathToEmotions = chrome.extension.getURL('emotions/');
 var pathToIcons = chrome.extension.getURL('icons/');
 
 var recentEmotions = [];
 var recentEmotionsCompare= [];
 
-
 //chrome.storage.sync.clear();
 var elementsCount = 0;
 var clickCount = 1;
 var visited = false;
+var emotes = new Array();
 
+var listeningClasses = ['im_msg_text', 'im_editable', 'dialogs_msg_text', 'wall_reply_text', 'wall_post_text', 'fc_msg'];
+
+//parsing emotes json
+var xhr = new XMLHttpRequest();
 var twitchEmotes = pathToEmotions + "emotions.json";
-$.getJSON(twitchEmotes, function(data){
-
+xhr.open('GET', twitchEmotes);
+xhr.send();
+xhr.onload = function() {
+  var data = JSON.parse(xhr.responseText);
 	var emotions = data.defaultTwitch;
 	var subEmotions = data.subTwitch;
-	var subEmotionsArray = [];
+	var subEmotionsArray = new Array();
 
-
-	for (var subKeyWord in subEmotions){
+	for (var subKeyWord in subEmotions) //pushing channels names into array
 		subEmotionsArray.push(subKeyWord);
-	}
 
-	emotionsUI(emotions, subEmotions, subEmotionsArray);
+  get_emotes();
+  emotionsUI(emotions, subEmotions, subEmotionsArray);//sending all info about emotes to create emotes window in dialogs
 
-	$(document).arrive('.im_msg_text', function(event){
-		var $newElem = $(this);
-		for (var keyWord in emotions){
-			if ((wordInString($newElem, keyWord)) === true){
-				replaceEmotions($newElem, keyWord, emotions[keyWord].id);
-			}
-		}
+  function get_emotes(){
+    for (var keyWord in emotions) //for every usual twitch emote
+      emotes[keyWord] = {name:keyWord, id:emotions[keyWord].id};// replace keyword with image
 
-		for (var i = 0; i<subEmotionsArray.length; i++){
-			var s = subEmotionsArray[i];
-			var e = subEmotions[s].emotes;
-			for (var y = 0; y<e.length; y++){
-				if ((wordInString($newElem, e[y].name)) === true){
-					replaceEmotions($newElem, e[y].name, e[y].id);
-				}
-			}
-		}
-	});
+      for (var z = 0; z<subEmotionsArray.length; z++){
+        var s = subEmotionsArray[z];
+        var e = subEmotions[s].emotes;
+        for (var y = 0; y<e.length; y++)
+          emotes[e[y].name] = {name:e[y].name, id:e[y].id}
+      }
+    doReplace();
+  }
 
-	$(document).arrive('.dialogs_msg_text', function(event){
-		var $newElem = $(this);
-		for (var keyWord in emotions){
-			if ((wordInString($newElem, keyWord)) === true){
-				replaceEmotions($newElem, keyWord, emotions[keyWord].id);
-			}
-		}
-
-		for (var i = 0; i<subEmotionsArray.length; i++){
-			var s = subEmotionsArray[i];
-			var e = subEmotions[s].emotes;
-			for (var y = 0; y<e.length; y++){
-				if ((wordInString($newElem, e[y].name)) === true){
-					replaceEmotions($newElem, e[y].name, e[y].id);
-				}
-			}
-		}
-	});
-
-	$(document).arrive('.reply_text', function(event){
-		var $newElem = $(this);
-
-		for (var keyWord in emotions){
-			if ((wordInString($newElem, keyWord)) === true){
-				replaceEmotions($newElem, keyWord, emotions[keyWord].id);
-			}
-		}
-
-		for (var i = 0; i<subEmotionsArray.length; i++){
-			var s = subEmotionsArray[i];
-			var e = subEmotions[s].emotes;
-			for (var y = 0; y<e.length; y++){
-				if ((wordInString($newElem, e[y].name)) === true){
-					replaceEmotions($newElem, e[y].name, e[y].id);
-				}
-			}
-		}
-	});
-
-});
-
-function wordInString(s, word){
-	var pureS = s.text();
-	var check = new RegExp( '\\b' + word + '\\b', 'i').test(pureS);
-	if (check === true)
-		return true;
 }
 
+function doReplace(){
+  static_replace(); //static replace works only after page load
+  dynamic_replace();//dynamic replace works with new dom elements
+}
 
-function replaceEmotions(element, emotion_name, emotion_id){
-	var emotion_img = "<img class='vKappaEmotion' ename='"+emotion_name+"'src='https://static-cdn.jtvnw.net/emoticons/v1/"+emotion_id+"/1.0'>";
-	element.html(function(){
-		var tempRegEx = new RegExp("\\b"+emotion_name+"\\b", "g");
-		return element.html().replace(tempRegEx, emotion_img);
-	});
+function static_replace(){
+  for (var l = 0; l<listeningClasses.length; l++){
+    var element = document.getElementsByClassName(listeningClasses[l]);
+    var length = element.length;
+    if (element){
+      for (var i = 0; i<length; i++){
+        for (key in emotes){  //for every usual twitch emote
+          if ((wordInString(element[i], key)) === true) //if keyword  really in text
+            replaceEmotions(element[i]);// replace keyword with image
+        }
+      }
+    }
+  }
+}
+
+function dynamic_replace(){
+  for (var i = 0; i<listeningClasses.length; i++){ //for every class where we replace emotes
+    document.arrive(('.'+listeningClasses[i]), function(event){ // arrive - little lib to help with Mutation observers coz im lazy
+      var elem = this;
+      for (key in emotes){  //for every usual twitch emote
+        if ((wordInString(elem, key)) === true) //if keyword  really in text
+          replaceEmotions(elem);// replace keyword with image
+      }
+    });
+  }
+}
+
+function wordInString(s, word){
+	var pureS = s.innerHTML;
+	var check = new RegExp(word + '\\b', 'm').test(pureS);
+	if (check === true)
+		return true;
+	return false;
+}
+
+function replaceEmotions(element){
+	var img = "<img class='vKappaEmotion' ename='"+key+"'src='https://static-cdn.jtvnw.net/emoticons/v1/"+emotes[key].id+"/1.0'>";
+	var tempRegEx = new RegExp(key+"\\b", "g");
+	element.innerHTML = element.innerHTML.replace(tempRegEx, img);
 }
 
 function emotionsUI(emotions, subEmotions, subEmotionsArray){
@@ -128,9 +117,9 @@ function emotionsUI(emotions, subEmotions, subEmotionsArray){
 		var emotionsPosition = $('#im_peer_holders');
 		var value = 0;
 
-		if (currentPageUrl == currentUrl){
+		if (currentPageUrl == currentUrl)
 			insertEmotions(currentPageID);
-		}
+
 		if ((currentPageID != null) && (visited === false )) { // fixing scroll bug
 			$('html, body').animate({scrollTop: $(document).height()}, 'fast');
 			visited = true;
@@ -342,5 +331,5 @@ function emotionInfo(selector){
 			$('.eInfo').remove();
 	});
 
-	
+
 }

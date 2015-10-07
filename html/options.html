@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>vKappa Options</title>
+  </head>
+
+  <body>
+
+    <p>
+      <div align="center">Общие настройки</div>
+      <hr/>
+    </p>
+
+    <p>
+      <input type="checkbox" id="enable_all"/>
+       Стандартные эмоции
+    </p>
+
+    <p>
+      <input type="checkbox" id="enable_sub"/>
+       Эмоции подписчиков
+    </p>
+
+    <p>
+      <input type="checkbox" id="enable_bttv"/>
+       Эмоции Better Twitch TV
+    </p>
+
+    <p>
+      <div align="center">Настройки интерфейса</div>
+
+      <hr/>
+      <img src="/icons/fav.png" style = "opacity:0.7"> - Избранные</img>
+      <img src="/icons/recent.png" style = "opacity:0.7; padding-left: 5px;"> - Последние</img>
+      <img src="/icons/all.png" style = "opacity:0.7; padding-left: 5px;"> - Стандартные</img>
+      <img src="/icons/sub.png" style = "opacity:0.7; padding-left: 5px;"> - Подписчиков</img>
+    </p>
+
+    <p>
+      Стартовая вкладка:
+      <br/>
+      <select id="start_page">
+        <option value="0">Избранные</option>
+        <option value="1">Последние</option>
+        <option value="2">Стандартные</option>
+        <option value="3">Подписчиков</option>
+      </select>
+    </p>
+
+    Список избранных эмоутов (через запятую):
+    <br/>
+    <textarea type="text" id="fav_emotes" style="width:450px; height: 60px;"> </textarea>
+
+    Список twitch.tv каналов (через запятую):
+    <textarea type="text" id="sub_channels" style="width:450px; height: 70px;"> </textarea>
+
+    <p>
+      <img src="https://static-cdn.jtvnw.net/emoticons/v1/54090/1.0" style="width:26px; height:26px;"></img> Полный список эмоций и каналов можно найти на <a href="https://twitchemotes.com">twitchemotes.com</a>
+    </p>
+     <img src="https://static-cdn.jtvnw.net/emoticons/v1/57484/1.0" style="width:26px; height:26px;"></img> Нашли ошибку/есть предложение? <a href="https://vk.com/blinkbody">Пишите</a>
+    <p>
+     <img src="https://static-cdn.jtvnw.net/emoticons/v1/62835/1.0" style="width:26px; height:26px;"></img> Понравилось расширение? Вы всегда можете <a href="support.html">поддержать разработчика</a>
+    </p>
+    <script src="/js/options.js"></script>
+    <script src="/js/ga.js"></script>
+  </body>
+</html>

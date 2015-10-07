@@ -1,0 +1,27 @@
+{
+   "background": {
+      "scripts": [ "js/background.js" ]
+   },
+   "content_scripts": [ {
+      "css": [ "css/content.css" ],
+      "js": [ "js/config.js","js/libs/jquery.js", "js/libs/arrive.js",  "js/content.js"],
+      "matches": [ "*://vk.com/*" ]
+   } ],
+   "options_ui": {
+      "page": "html/options.html",
+      "chrome_style": true
+   },
+   "description": "Twitch TV emotes for VK. Kappa.",
+   "icons": {
+      "128": "icons/icon.png"
+   },
+ "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApjh0MTRI7dF0Bjj1f/yD0BWuV97LRMJdYLy3+F5WFOu9gVDLcyK3nMTIqL5+1Ula0GaOEM9Vh7tf4sMoVswVcoF/mfd43HBQDy4VX31D6OAg5G7sLZPr/zH/kTDsRnWkOvUKmf8n5JamCiRDuJit1OCq9d+z9lgnVPCCrgjMxVTfZVd0ny0x6HQhiomxRGsHXfLrptSllMw4Kf1LZljfUWvY6TgYUSaOYxmsDVzO7QZ1PqCZyi7QgUEaSGG9kWmQw/9QgeoQK6/imxc0+K7vdrewe1CBOzedunFkLssEeC0Q8Cv9rfA5lkbDnDqw1ei2WxONKmXxc6uxEQP2sSHsRQIDAQAB",
+   "manifest_version": 2,
+   "name": "vKappa for VK",
+   "permissions": ["storage"],
+   "short_name": "vKappa",
+   "update_url": "https://clients2.google.com/service/update2/crx",
+   "version": "2.0",
+   "content_security_policy": "script-src 'self' https://www.google-analytics.com; object-src 'self' blob: filesystem: chrome-extension-resource:",
+   "web_accessible_resources": [ "icons/*", "emotions/*", "options/options.html" ]
+}

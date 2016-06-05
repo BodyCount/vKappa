@@ -1,3 +1,8 @@
+.nim-dialog--content .vkappa_emotion { /* new.vk: уменьшаем размер эмоута в превью диалога, что бы не ломать границы разума */
+	width:10%;
+	height:10%;
+}
+
 .vkappa_emotions_hub {
 	position: relative;
 }

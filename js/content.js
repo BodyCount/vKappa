@@ -14,7 +14,9 @@ var selectedChannels = new Array() // user selected channels with emotes
 var favoriteEmotes = new Array()
 	, _favoriteEmotes = new Array();
 
-var currentChatbox, selectedStartPage, enableAll, enableSub, enableBTTV;
+var currentChatbox, selectedStartPage, enableGlobal, enableSub, enableBTTV;
+
+var VERSION;
 
 //chrome.storage.sync.clear();
 
@@ -27,7 +29,7 @@ function getOptions()
 													 "subChannels": config.subChannels, "startPage": config.startPage}, 
 	function(items)
 	{
-		enableAll = items.enableAll;
+		enableGlobal = items.enableAll;
 		enableSub = items.enableSub;
 		enableBTTV = items.enableBTTV;
 		selectedStartPage = items.startPage;
@@ -51,25 +53,72 @@ function getOptions()
 
 function init()
 {
-	if (enableAll)
-		getGlobalEmotes();
 
-	if (enableBTTV)
-		getBTTVEmotes();
+  if (window.location.host === 'new.vk.com') 
+    VERSION = 2; 
+  else
+    VERSION = 1;
 
-	getSubEmotes().then(function()
-	{
-		if (!enableSub)
-			emotes["sub"] = {};
+  console.log('Init vKappa for vk version %s', VERSION);
 
-		startReplace();
-		emotionInfo('.vkappa_emotion');
-		createListOfChannels();
-		createListOfFav();
-		window.onLoad = createEmotionsUi();
-		setInterval(locationChange.bind(null, createEmotionsUi), 1000);
-		emotionInfo('.col');
-	});
+  var isReady = {
+    global: false,
+    bttv: false,
+    sub: false
+  }
+
+  if (enableGlobal)
+    getGlobalEmotes(function(err, data)
+    {
+      if (err) return console.log(err);
+      emotes['global'] = data;
+      isReady.global = true;
+      start();
+    });
+
+  if (enableBTTV)
+    getBTTVEmotes(function(err, data)
+    {
+      if (err) return console.log(err);  
+      emotes["bttv"] = data;  
+      isReady.bttv = true;  
+      start();
+    });
+
+  if (enableSub)
+    getSubEmotes(function(err, data)
+    {
+      if (err) 
+      {
+        console.log(err);
+        emotes["sub"] = {};
+        isReady.sub = true; 
+        start();
+      }
+      else 
+      {
+        emotes["sub"] = data;
+        isReady.sub = true; 
+        start();        
+      }
+
+    });
+
+  function start()
+  {
+    if (enableGlobal === isReady.global && enableBTTV === isReady.bttv && enableSub === isReady.sub)
+    {
+
+      startReplace();
+      emotionInfo('.vkappa_emotion');
+      createListOfChannels();
+      createListOfFav();
+
+      window.onLoad = createEmotionsUi();
+      setInterval(locationChange.bind(null, createEmotionsUi), 1000);
+      emotionInfo('.col');     
+    }
+  }
 }
 
 var currentLocation = window.location.search;
@@ -81,80 +130,113 @@ function locationChange(callback)
   callback();
 }
 
-function getGlobalEmotes()
+function getGlobalEmotes(callback)
 {
   var xhr = new XMLHttpRequest();
-  var url = "//twitchemotes.com/api_cache/v2/global.json";
-  xhr.onload = function()
-  {
-    var data = JSON.parse(xhr.responseText);
-    if (data)
-      emotes['global'] = data.emotes;
-  }
-  xhr.open('GET', url);
+  xhr.open('GET', '//twitchemotes.com/api_cache/v2/global.json', true);
   xhr.send();
-}
-
-function getSubEmotes()
-{
-  return new Promise(function(resolve, reject)
+  xhr.onreadystatechange = function()
   {
-    var t = new Object();
-    var xhr = new XMLHttpRequest();
-    var url = "//twitchemotes.com/api_cache/v2/subscriber.json";
-    xhr.onload = function()
+    if (this.readyState != 4) return;
+    if (this.status != 200) 
     {
-      var data = JSON.parse(xhr.responseText);
-      for(var channel in data.channels)
-      {
-        var c = data.channels[channel];
-        channels[channel] = {"title": c.title, "badge": c.badge,  "emotes": c['emotes']};
-        var emotions = data.channels[channel]['emotes'];
-        for (var e in emotions)
-          t[emotions[e].code] = {"code":emotions[e].code, "image_id" : emotions[e].image_id, "channel": c.title}; // saving emotes without channel name to use in replace
-
-        _channels.push(channel);
-      }
-      emotes['sub'] = t;
-      resolve("ready");
+      console.log('xhr error:')
+      return console.log(this.status? this.statusText: 'no statusText error')
     }
-    xhr.open('GET', url);
-    xhr.send();
-  });
+
+    try {
+      var data = JSON.parse(this.responseText);
+    } catch (err) {
+      console.log('Ошибка в обработке данных:')
+      return callback(err);
+    }
+
+    callback(null, data.emotes);
+  }
+
 }
 
-function getBTTVEmotes()
+function getSubEmotes(callback)
+{
+  var t = new Object();
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', "//twitchemotes.com/api_cache/v2/subscriber.json", true);
+  xhr.send();
+  xhr.onreadystatechange = function()
+  {
+    if (this.readyState != 4) return;
+    if (this.status != 200) 
+    {
+      console.log('xhr error:')
+      return callback(this.status? this.statusText: 'no statusText error');
+    }
+
+    try {
+      var data = JSON.parse(this.responseText);
+    } catch (err) {
+      console.log('Ошибка в обработке данных:')
+      return callback(err);
+    }
+
+    for(var channel in data.channels)
+    {
+      var c = data.channels[channel];
+      channels[channel] = {"title": c.title, "badge": c.badge,  "emotes": c['emotes']};
+      var emotions = data.channels[channel]['emotes'];
+      for (var e in emotions)
+        t[emotions[e].code] = {"code":emotions[e].code, "image_id" : emotions[e].image_id, "channel": c.title}; // saving emotes without channel name to use in replace
+
+      _channels.push(channel);
+    }
+    callback(null, t);
+  }
+
+}
+
+function getBTTVEmotes(callback)
 {
 	var t = new Object();
   var xhr = new XMLHttpRequest();
-  var url = "//api.betterttv.net/2/emotes/";
-  xhr.onload = function()
+  xhr.open('GET','//api.betterttv.net/2/emotes/', true);
+  xhr.send();
+  xhr.onreadystatechange = function()
   {
-    var data = JSON.parse(xhr.responseText)
-    	, e = data.emotes;
+    if (this.readyState != 4) return;
+    if (this.status != 200) 
+    {
+      console.log('xhr error:')
+      return callback(this.status? this.statusText: 'no statusText error');
+    }
+
+    try {
+      var data = JSON.parse(this.responseText);
+    } catch (err) {
+      console.log('Ошибка в обработке данных:')
+      return callback(err);
+    }
+
+    var e = data.emotes;
     for (var i = 0; i < e.length; i++)
     {
     	var url = "//cdn.betterttv.net/emote/"+e[i].id+"/1x";
     	t[e[i].code] = ({"title": e[i].code, "url": url, "channel": "Better Twitch TV"});
     }
-    emotes["bttv"] = t;
+    callback(null, t);
   }
-  xhr.open('GET', url);
-  xhr.send();
+
 }
 
 function createListOfFav()
 {
   for (var f in _favoriteEmotes)
   {
-    var emoteId = _favoriteEmotes[f]
-    if (emoteId in emotes.global || emoteId in emotes.sub)
+    var emoteId = _favoriteEmotes[f];
+    if (emoteId in emotes.global)
     {
-      var emote = emotes.global[emoteId] || emotes.sub[emoteId];
+      var emote = emotes.global[emoteId];
       favoriteEmotes[emoteId] = emote;
     }
   }
-  console.log
 }
 
 function createListOfChannels()
@@ -172,7 +254,7 @@ function startReplace()
   for (var i = 0; i<l; i++)
   {
     document.arrive(('.'+config.trackingList[i]), function(event){parseElement(this);}); // using this lib to work with mutation observers in easy way
-
+    
     var elements = document.getElementsByClassName(config.trackingList[i]);
     if (elements.length != 0)
       for (var k in elements)
@@ -198,6 +280,7 @@ function parseElement(element)
 }
 
 var isValid = (word) => !(word.length < 4);
+
 function replaceEmotions(element)
 {
 	if(!element.querySelector(".vkappa_emotion"))
@@ -209,8 +292,10 @@ function replaceEmotions(element)
 	  for (var i = 0; i < length; i++)
 	  {
 	    var word = words[i];
+
 	    if (isValid(word))
 			{
+
 	      if (word in emotes.global || word in emotes.sub || word in emotes.bttv)
 	      {
 	        var emote = emotes.global[word] || emotes.sub[word] || emotes.bttv[word]
@@ -263,7 +348,7 @@ function createEmotionsHub()
 {
   var emotionsHub, emotionsContainer, twitchIcon, hubLocation, tabsMenu, startPageLi, startPageDiv, tabsContainer, allEmotionsLi;
 
-  hubLocation = document.getElementById("im_peer_holders");
+
 
   emotionsHub = document.createElement("div"), emotionsHub.className = "vkappa_emotions_hub";
   emotionsContainer = document.createElement("div"), emotionsContainer.className = "emotions_container";
@@ -275,11 +360,11 @@ function createEmotionsHub()
                                 "<div id='sub_emotions' class='tab_content'><ul class='sub_section'></ul></div>"+
                               "</div>"+
                               "<ul class='tabs_menu'>"+
-                                "<li><a href='#fav_emotions'><img src='"+pathToIcons+"fav.png"+"' style = 'opacity: 0.7'></img></a></li>"+
-                                "<li><a href='#recent_emotions'><img src='"+pathToIcons+"recent.png"+"' style = 'opacity: 0.7'></img></a></li>"+
-                                "<li><a href='#all_emotions'><img src='"+pathToIcons+"all.png"+"' style = 'opacity: 0.7'></img></a></li>"+
-                                "<li><a href='#sub_emotions'> <img src='"+pathToIcons+"sub.png"+"' style = 'opacity: 0.7'></img></a></li>"+
-                                "<li id ='options'><a href=''> <img src='"+pathToIcons+"options.png"+"' style = 'opacity: 0.7'></img></a></li>"+
+                                "<li><a id='fav_emotions'><img src='"+pathToIcons+"fav.png"+"' style = 'opacity: 0.7'></img></a></li>"+
+                                "<li><a id='recent_emotions'><img src='"+pathToIcons+"recent.png"+"' style = 'opacity: 0.7'></img></a></li>"+
+                                "<li><a id='all_emotions'><img src='"+pathToIcons+"all.png"+"' style = 'opacity: 0.7'></img></a></li>"+
+                                "<li><a id='sub_emotions'> <img src='"+pathToIcons+"sub.png"+"' style = 'opacity: 0.7'></img></a></li>"+
+                                "<li id ='options'><a> <img src='"+pathToIcons+"options.png"+"' style = 'opacity: 0.7'></img></a></li>"+
                               "</ul>";
 
   twitchIcon = document.createElement("img");
@@ -291,7 +376,19 @@ function createEmotionsHub()
   emotionsHub.appendChild(twitchIcon);
   emotionsHub.appendChild(emotionsContainer);
 
-  hubLocation.parentNode.appendChild(emotionsHub);
+  if (VERSION === 2)
+  {
+    hubLocation = document.getElementsByClassName("im-chat-input--textarea")[0];
+    hubLocation.appendChild(emotionsHub);  
+    document.getElementsByClassName('vkappa_emotions_hub')[0]
+            .setAttribute("style", "position: absolute; margin-left: 94.4%; bottom: 54px;") 
+  }
+
+  if (VERSION === 1)
+  {
+    hubLocation = document.getElementById("im_peer_holders");
+    hubLocation.parentNode.appendChild(emotionsHub);
+  }
 
   tabsMenu = document.getElementsByClassName("tabs_menu")[0];
   //set up start page from options
@@ -319,7 +416,7 @@ function appendEmotes()
     emote = favoriteEmotes[f], col = document.createElement("div"), img = document.createElement("img");
 
     img.id = emote.image_id;
-    img.src = "//static-cdn.jtvnw.net/emoticons/v1/"+emote.image_id+"/1.0'";
+    img.src = "//static-cdn.jtvnw.net/emoticons/v1/"+emote.image_id+"/1.0";
 
     col.className = "col";
     col.id = f;
@@ -344,7 +441,6 @@ function appendEmotes()
 
     cHeader.value = value;
     cHeader.onclick = loadSubEmotes;
-    cLink.href = "#"+channel.title;
     cHeader.appendChild(channelLogo);
     cLink.appendChild(document.createTextNode(channel.title));
 
@@ -371,7 +467,7 @@ function loadEmotes()
     emote = emotes.global[k], col = document.createElement("div"), img = document.createElement("img");
 
     img.id = emote.image_id
-    img.src = "//static-cdn.jtvnw.net/emoticons/v1/"+emote.image_id+"/1.0'";
+    img.src = "//static-cdn.jtvnw.net/emoticons/v1/"+emote.image_id+"/1.0";
 
     col.className = "col";
     col.id = k;
@@ -397,7 +493,7 @@ function loadSubEmotes()
   	emote = emotes[i], col = document.createElement("div"), img = document.createElement("img");
 
   	img.id = emote.image_id;
-    img.src = "//static-cdn.jtvnw.net/emoticons/v1/"+emote.image_id+"/1.0'";
+    img.src = "//static-cdn.jtvnw.net/emoticons/v1/"+emote.image_id+"/1.0";
 
     col.className = "col";
     col.id = emote.code;
@@ -485,14 +581,14 @@ function appendRecent()
 
 function spawnEmote(that)
 {
-  var inputPlaceholder = document.getElementsByClassName("input_back_wrap")
+  var inputPlaceholder = (VERSION == '1')?document.getElementsByClassName("input_back_wrap"):document.getElementsByClassName("placeholder")
     , l = inputPlaceholder.length;
   for (var i = 0; i < l; i++)
     inputPlaceholder[i].style.cssText = "display: none;";
   currentChatbox.innerHTML += that.id + " ";
 }
 
-function initJqueryEffects()
+function initJqueryEffects() //вероятно, в этой функции написан полный бред
 {
   $('.vkappa_emotions_hub').hover(  //show content
   function ()
@@ -507,23 +603,24 @@ function initJqueryEffects()
   });
 
   $('.tabs_menu li').click(function(e) { // change active tab
-    e.preventDefault();
+   // e.preventDefault();
     if (this.id === "options")
     	chrome.runtime.sendMessage({msg: "openOptions"});
     else 
     {
 	    $(this).addClass("current");
 	    $(this).siblings().removeClass("current");
-	    var tab = $(this).find('a').attr("href");
+	    var tab = $(this).find('a').attr("id");
 	    $(".tab_content").not(tab).css("display", "none");
-	    $(tab).fadeIn();
+	    $('#'+tab).fadeIn();
     }
   });
 
   $('.tab_content .sub_section li').click(function(e) 
   { // show specific sub channel emotes
     e.preventDefault();
-    var element = $(this).find('a').attr("href");
+    var element = $(this).find('a').html();
+    element = '#' + element;
     if (($(this).attr("class")) === "current")
     {
       $(this).removeClass("current");

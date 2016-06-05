@@ -1,7 +1,7 @@
 "use strict";
 
 var config = {
-	"trackingList": ['im_msg_text', 'im_editable', 'dialogs_msg_text', 'wall_reply_text', 'wall_post_text', 'fc_msg', 'pv_commtext', 'reply_table'],
+	"trackingList": ['im-mess--text', 'nim-dialog--content', 'im_msg_text', 'im_editable', 'dialogs_msg_text', 'wall_reply_text', 'wall_post_text', 'fc_msg', 'pv_commtext', 'reply_table'],
 	"enableAll": true,
 	"enableSub": true,
 	"enableBTTV": true,
